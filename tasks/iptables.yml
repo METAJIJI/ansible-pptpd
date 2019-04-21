@@ -1,0 +1,26 @@
+---
+- name: iptables - Ensure firewalld.service is disabled and stopped
+  systemd:
+    name: firewalld.service
+    enabled: no
+    state: stopped
+    masked: yes
+  ignore_errors: yes
+
+- name: iptables - Ensure iptables.service is enabled and started
+  systemd:
+    name: iptables.service
+    enabled: yes
+    state: started
+
+- name: iptables - Add masquerade rule from pptp network
+  iptables:
+    table: nat
+    chain: POSTROUTING
+    action: append
+    source: "{{ pptp_ip_prefix }}.0/24"
+    destination: "!{{ pptp_ip_prefix }}.0/24"
+    out_interface: "{{ ansible_default_ipv4.interface }}"
+    jump: MASQUERADE
+    comment: Masquerade pptp network
+  notify: iptables save

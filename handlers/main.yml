@@ -1,0 +1,8 @@
+---
+- name: restart pptpd
+  service:
+    name: pptpd
+    state: restarted
+
+- name: iptables save
+  command: /usr/libexec/iptables/iptables.init save

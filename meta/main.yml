@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  author: Denis Kadyshev
+  description: Install/Configure PPTP server
+  min_ansible_version: 2.7
+  license: WTFPL
+  platforms:
+    - name: Centos
+      versions:
+        - All
+  galaxy_tags:
+    - networking
+    - system

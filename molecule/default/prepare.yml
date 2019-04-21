@@ -1,0 +1,11 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Install required packages
+      become: yes
+      yum:
+        name:
+          - iproute
+        state: present

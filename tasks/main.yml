@@ -1,0 +1,78 @@
+---
+- name: Install dependencies
+  yum:
+    name: "{{ pptp_dependencies }}"
+  tags:
+    - install
+
+- name: Add firewall package
+  set_fact:
+    pptp_packages: "{{ pptp_packages + [pptp_firewall_packages[pptp_firewall_type]] }}"
+  when: pptp_firewall_type in ['firewalld', 'iptables']
+  tags:
+    - install
+
+- name: Install pptpd packages
+  yum:
+    name: "{{ pptp_packages }}"
+  notify: restart pptpd
+  tags:
+    - install
+
+- name: Configure pptpd.conf
+  lineinfile:
+    dest: /etc/pptpd.conf
+    regexp: "^{{ item }}"
+    insertafter: "^# *?{{ item }}"
+    line: "{{ item }}"
+  loop: "{{ pptp_conf }}"
+  notify: restart pptpd
+  tags:
+    - config
+
+- name: Configure options.pptpd
+  lineinfile:
+    dest: /etc/ppp/options.pptpd
+    regexp: "^{{ item }}"
+    insertafter: "^# *?{{ item }}"
+    line: "{{ item }}"
+  loop: "{{ pptp_options }}"
+  notify: restart pptpd
+  tags:
+    - config
+
+- name: Add users
+  lineinfile:
+    dest: /etc/ppp/chap-secrets
+    regexp: "^{{ item.user }}"
+    insertafter: "^# *?{{ item.user }}"
+    line: "{{ item.user }} pptpd {{ item.passwd }} *"
+  loop: "{{ pptp_users }}"
+  notify: restart pptpd
+  tags:
+    - config
+    - users
+
+- name: Configure sysctl
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+    ignoreerrors: yes
+  loop: "{{ pptp_sysctl_params }}"
+  tags:
+    - sysctl
+
+- name: Include firewall {{ pptp_firewall_type }}.yml
+  include: "{{ pptp_firewall_type }}.yml"
+  when: pptp_firewall_type in ['firewalld', 'iptables']
+  tags:
+    - firewalld
+    - iptables
+
+- name: Start and enable service
+  systemd:
+    name: pptpd
+    state: started
+    enabled: yes

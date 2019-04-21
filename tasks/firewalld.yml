@@ -1,0 +1,42 @@
+---
+- name: firewald - Add pptp service to firewald database
+  template:
+    src: etc/firewalld/services/pptp.xml.j2
+    dest: /etc/firewalld/services/pptp.xml
+    owner: root
+    mode: 0640
+  register: firewalld_service_pptp
+
+- name: firewald - Ensure iptables.service is disabled and stopped
+  systemd:
+    name: iptables.service
+    enabled: no
+    state: stopped
+    masked: yes
+  ignore_errors: yes
+
+- name: firewald - Enable and start firewalld service
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: firewald - Reload firewalld service
+  command: firewall-cmd --reload
+  when: firewalld_service_pptp.changed
+
+- name: firewald - Add pptp service for firewalld
+  firewalld:
+    zone: "{{ pptp_firewalld.default_zone }}"
+    service: pptp
+    immediate: true
+    permanent: true
+    state: enabled
+
+- name: firewald - Enable masquerading
+  firewalld:
+    masquerade: yes
+    state: enabled
+    permanent: yes
+    immediate: yes
+    zone: "{{ pptp_firewalld.default_zone }}"

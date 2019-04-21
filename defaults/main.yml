@@ -1,0 +1,34 @@
+---
+pptp_dependencies:
+  - epel-release
+
+pptp_packages:
+  - pptpd
+
+pptp_sysctl_params:
+  - key: net.ipv4.ip_forward
+    value: 1
+
+pptp_options:
+  - require-mschap-v2
+  - require-mppe-128
+  - ms-dns 1.1.1.1
+  - ms-dns 8.8.8.8
+
+pptp_ip_prefix: 192.168.139
+pptp_conf:
+  - localip {{ pptp_ip_prefix }}.1
+  - remoteip {{ pptp_ip_prefix }}.10-250
+
+# Can be: iptables, firewalld, none
+pptp_firewall_type: iptables
+pptp_firewall_packages:
+  firewalld: firewalld
+  iptables: iptables-services
+
+pptp_firewalld:
+  default_zone: public
+
+pptp_users: []
+#  - user: vpnuser
+#    passwd": "T0p5eCr3T"
